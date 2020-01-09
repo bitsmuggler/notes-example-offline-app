@@ -30,7 +30,6 @@ function addNotes(notes) {
     notes.forEach((note) => {
       let newNoteElement = new NoteElement(note, getCurrentNotebookId());
       containerElement.appendChild(newNoteElement);
-      console.dir(newNoteElement);
     });
   } else {
     console.warn('No notes found in this notebook.');
@@ -43,7 +42,6 @@ async function getNotebooks() {
 }
 
 async function getNotes(notebookId) {
-  console.log('get notes');
   const response = await fetch(`/notebooks/${notebookId}`);
   return await response.json();
 }
@@ -51,7 +49,6 @@ async function getNotes(notebookId) {
 function getCurrentNotebookId() {
   let hashSplitResult = location.hash.split('/');
   let currentNotebookId = hashSplitResult[hashSplitResult.length - 1]
-  console.debug("Current notebook: %s", currentNotebookId);
   return currentNotebookId;
 }
 
@@ -70,15 +67,12 @@ function initNavigation() {
 }
 
 async function createNote(notebookId, noteData) {
-  console.log('create a new note');
-  console.dir(JSON.stringify(noteData));
   const response = await fetch(`/notebooks/${notebookId}/notes`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: noteData});
-
   return await response.json();
 }
 
 function createNotebook() {
-  const response = fetch(`/notebooks/`, {method: 'POST'}).then(() => {
+  fetch(`/notebooks/`, {method: 'POST'}).then(() => {
     initNavigation();
   });
 }
@@ -91,8 +85,6 @@ function getNoteDataFromModalForm(form) {
 }
 
 function listenToNotesCreation() {
-  console.log('listen to notes creation entry...');
-
   let form = document.querySelector('#noteForm');
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -111,17 +103,14 @@ function listenToNotesCreation() {
 
 function renderNotes(notebookId) {
   if(notebookId) {
-    console.log('Event: %s', notebookId);
     setNotebookSelectionName(notebookId);
     getNotes(notebookId).then(data => {
-      console.dir(data);
       addNotes(data.notes);
     });
   }
 }
 
 function bootstrap() {
-  console.debug('bootstrapping app...');
   initNavigation();
   listenToNotesCreation();
   let selectedNotebookId = getCurrentNotebookId();
@@ -131,7 +120,6 @@ function bootstrap() {
 
 window.onhashchange = () => {
   let currentNotebookId = getCurrentNotebookId();
-  console.debug('Current notebook: %s', currentNotebookId);
   let event = getNotebookChangedEvent(currentNotebookId);
   document.body.dispatchEvent(event);
 }
