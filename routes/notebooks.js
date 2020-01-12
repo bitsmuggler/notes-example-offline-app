@@ -27,7 +27,7 @@ router.post('/', (req, res, next) => {
 
 router.post('/:bookuid/notes/', (req, res) => {
   let repository = new NotebookRepository();
-  repository.addNote(req.params.bookuid, req.body.title, req.body.note)
+  repository.addNote(req.params.bookuid, req.body.title, req.body.message)
                          .then(noteId => res.send({ noteId: noteId }))
                          .catch(() => res.status(500));
 });

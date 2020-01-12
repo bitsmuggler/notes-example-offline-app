@@ -2,7 +2,6 @@ class StatusElement extends HTMLElement {
 
     constructor() {
         super();
-        console.log('constructor');
         window.addEventListener('offline', event => {
             this.innerHTML = `<footer class="footer mt-auto py-3" style="background-color: #FEF3CD; color: #977B2E; margin-top:auto; position: fixed; bottom: 0; width: 100%">
             <div class="container">
@@ -21,6 +20,11 @@ class StatusElement extends HTMLElement {
               </div>        
             </div>
           </footer>`;
+
+
+          let customEvent = new CustomEvent('sync-notes');
+
+          document.body.dispatchEvent(customEvent);
         });
     }
 }

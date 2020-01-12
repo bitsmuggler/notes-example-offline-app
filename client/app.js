@@ -1,8 +1,11 @@
 const notebookChangedEventName = 'notebook-changed';
 const noteDeletedEventName = 'note-deleted';
+const notesSyncEventName = 'sync-notes';
+
+let db = undefined;
 
 function getNotebookChangedEvent(notebookId) {
-  return new CustomEvent(notebookChangedEventName, {detail: {notebookId: notebookId}});
+  return new CustomEvent(notebookChangedEventName, { detail: { notebookId: notebookId } });
 }
 
 function getNotebookTemplate(note) {
@@ -11,14 +14,14 @@ function getNotebookTemplate(note) {
 
 function clearCurrentNotebooks() {
   let containerElement = document.querySelector('.dropdown-toggle');
-   containerElement.innerHTML = '';
+  containerElement.innerHTML = '';
 }
 
 function addNotebooksToNavigationMenu(notebookId) {
-    let containerElement = document.querySelector('#notebooks');
-    let newNotebookElement = document.createElement('div');
-    newNotebookElement.innerHTML = getNotebookTemplate(notebookId);
-    containerElement.appendChild(newNotebookElement);
+  let containerElement = document.querySelector('#notebooks');
+  let newNotebookElement = document.createElement('div');
+  newNotebookElement.innerHTML = getNotebookTemplate(notebookId);
+  containerElement.appendChild(newNotebookElement);
 }
 
 function addNotes(notes) {
@@ -26,14 +29,19 @@ function addNotes(notes) {
 
     let containerElement = document.querySelector('#notes');
     containerElement.innerHTML = '';
-      
+
     notes.forEach((note) => {
-      let newNoteElement = new NoteElement(note, getCurrentNotebookId());
-      containerElement.appendChild(newNoteElement);
+      addNote(note);
     });
   } else {
     console.warn('No notes found in this notebook.');
   }
+}
+
+function addNote(note) {
+  let containerElement = document.querySelector('#notes');
+  let newNoteElement = new NoteElement(note, getCurrentNotebookId());
+  containerElement.appendChild(newNoteElement);
 }
 
 async function getNotebooks() {
@@ -61,18 +69,29 @@ function initNavigation() {
   clearCurrentNotebooks();
   getNotebooks().then(notebooks => {
     notebooks.forEach(notebook => {
-        addNotebooksToNavigationMenu(notebook);
+      addNotebooksToNavigationMenu(notebook);
     });
   });
 }
 
 async function createNote(notebookId, noteData) {
-  const response = await fetch(`/notebooks/${notebookId}/notes`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: noteData});
-  return await response.json();
+  if (navigator.onLine) {
+    const response = await fetch(`/notebooks/${notebookId}/notes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: noteData });
+    return await response.json();
+  } else {
+    let note = JSON.parse(noteData);
+    return await db.notes.add({
+      notebookId: notebookId,
+      title: note.title,
+      message: note.message,
+      date: note.date,
+      synch: false
+    });
+  }
 }
 
 function createNotebook() {
-  fetch(`/notebooks/`, {method: 'POST'}).then(() => {
+  fetch(`/notebooks/`, { method: 'POST' }).then(() => {
     initNavigation();
   });
 }
@@ -80,7 +99,8 @@ function createNotebook() {
 function getNoteDataFromModalForm(form) {
   let formData = new FormData(form);
   let object = {};
-  formData.forEach((value, key) => {object[key] = value});
+  formData.forEach((value, key) => { object[key] = value });
+  object.date = new Date();
   return JSON.stringify(object);
 }
 
@@ -90,19 +110,17 @@ function listenToNotesCreation() {
     event.preventDefault();
     let data = getNoteDataFromModalForm(event.target);
 
-    createNote(getCurrentNotebookId(), data).then(() => {
-      getNotes(getCurrentNotebookId()).then(data => {
-        addNotes(data.notes);
-      });
-      
-      // Unfortunately jQuery --> closing a modal dialog with vanillajs is hard
+    createNote(getCurrentNotebookId(), data).then((d) => {
+      addNote(JSON.parse(data));
+
+      // Unfortunately jQuery --> closing a bootstrap modal dialog with vanillajs is hard
       $('#addNoteModal').modal('hide');
     });
   });
 }
 
 function renderNotes(notebookId) {
-  if(notebookId) {
+  if (notebookId) {
     setNotebookSelectionName(notebookId);
     getNotes(notebookId).then(data => {
       addNotes(data.notes);
@@ -110,7 +128,41 @@ function renderNotes(notebookId) {
   }
 }
 
+function openDatabase() {
+  db = new Dexie('notes');
+
+  db.version(1).stores({
+    notes: '++id, notebookId, title, message, date, synched'
+  });
+}
+
+function deleteNoteInSynchDb(note) {
+  db.transaction('rw', db.notes, async () => {
+     await db.notes.where("id").equals(note.id).delete();
+  }).then(() => {
+    console.log('Transaction committed.');
+  }).catch(err => {
+    console.error(err.stack);
+  });
+}
+
+function syncNotes() {
+  return db.transaction('rw', db.notes, async () => {
+    await db.notes.each(note => {
+      createNote(getCurrentNotebookId(), JSON.stringify(note));
+      deleteNoteInSynchDb(note);
+    });
+  });
+}
+
 function bootstrap() {
+
+  if (!window.indexedDB) {
+    console.warn('Your browser has not any IndexedDB Support!');
+  } else {
+    openDatabase();
+  }
+
   initNavigation();
   listenToNotesCreation();
   let selectedNotebookId = getCurrentNotebookId();
@@ -125,13 +177,17 @@ window.onhashchange = () => {
 }
 
 document.body.addEventListener(notebookChangedEventName, (event) => {
-  let notebookId = event.detail.notebookId;  
+  let notebookId = event.detail.notebookId;
   renderNotes(notebookId);
 });
 
 document.body.addEventListener(noteDeletedEventName, () => {
   let notebookId = getCurrentNotebookId();
   renderNotes(notebookId);
+});
+
+document.body.addEventListener(notesSyncEventName, () => {
+  syncNotes();
 });
 
 bootstrap();

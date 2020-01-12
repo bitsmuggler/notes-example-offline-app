@@ -1,4 +1,4 @@
-const CACHE_NAME = 'notes-app-cache-v1';
+const CACHE_NAME = 'notes-app-cache-v5';
 
 const filesToCache = [
     '/',
@@ -13,8 +13,6 @@ const filesToCache = [
     'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'
 ];
 
-let log = console.log;
-
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(function (cache) {
@@ -27,11 +25,9 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', () => activateSW());
 
 async function activateSW() {
-
-    log('Service Worker activated');
-
     const cacheKeys = await caches.keys();
 
+    // Clean cache with a new activation
     cacheKeys.forEach(cacheKey => {
         if (cacheKey !== CACHE_NAME) {
             caches.delete(cacheKey);
@@ -40,13 +36,14 @@ async function activateSW() {
 }
 
 self.addEventListener('fetch', event => {
-    console.log('fetching...');
-    console.dir(event);
     event.respondWith(caches.open(CACHE_NAME).then(cache => {
         return cache.match(event.request).then(response => {
             let fetchPromise = fetch(event.request).then(networkResponse => {
-                cache.put(event.request, networkResponse.clone());
-                return networkResponse;
+
+                if(event.request.method === 'GET') {
+                    cache.put(event.request, networkResponse.clone());
+                }
+                 return networkResponse;
             }).catch(error => {
                 console.warn('Could not fetch at the moment.');
                 console.dir(event.request);
