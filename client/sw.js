@@ -13,23 +13,17 @@ const filesToCache = [
     'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'
 ];
 
-let log = console.log;
-
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(function (cache) {
+        caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(filesToCache);
         })
     );
 });
 
+self.addEventListener('activate', () => {
 
-self.addEventListener('activate', () => activateSW());
-
-async function activateSW() {
-
-    log('Service Worker activated');
-
+    console.log('Service Worker activated');
     const cacheKeys = await caches.keys();
 
     cacheKeys.forEach(cacheKey => {
@@ -37,7 +31,7 @@ async function activateSW() {
             caches.delete(cacheKey);
         }
     });
-}
+});
 
 self.addEventListener('fetch', event => {
     console.log('fetching...');
@@ -49,7 +43,7 @@ self.addEventListener('fetch', event => {
                 return networkResponse;
             }).catch(error => {
                 console.warn('Could not fetch at the moment.');
-                console.dir(event.request);
+                console.error(error);
             });
 
             return response || fetchPromise;
