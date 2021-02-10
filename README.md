@@ -12,8 +12,8 @@
 
 ## Start Frontend
 
-    ``npx gulp webserver``
+``npx gulp webserver``
 
 ## Start Backend
 
-    ``npm run start``
+``npm run start``
