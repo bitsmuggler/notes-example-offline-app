@@ -26,7 +26,6 @@ function addNotebooksToNavigationMenu(notebookId) {
 
 function addNotes(notes) {
   if (notes) {
-debugger;
     let containerElement = document.querySelector('#notes');
     containerElement.innerHTML = '';
 
