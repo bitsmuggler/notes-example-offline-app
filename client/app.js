@@ -2,7 +2,7 @@ const notebookChangedEventName = 'notebook-changed';
 const noteDeletedEventName = 'note-deleted';
 const notesSyncEventName = 'sync-notes';
 
-let db = undefined;
+let db = null;
 
 function getNotebookChangedEvent(notebookId) {
   return new CustomEvent(notebookChangedEventName, { detail: { notebookId: notebookId } });
@@ -26,7 +26,7 @@ function addNotebooksToNavigationMenu(notebookId) {
 
 function addNotes(notes) {
   if (notes) {
-
+debugger;
     let containerElement = document.querySelector('#notes');
     containerElement.innerHTML = '';
 
@@ -186,7 +186,7 @@ document.body.addEventListener(noteDeletedEventName, () => {
   renderNotes(notebookId);
 });
 
-document.body.addEventListener(notesSyncEventName, () => {
+window.addEventListener('online', () => {
   syncNotes();
 });
 

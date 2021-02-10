@@ -21,7 +21,7 @@ self.addEventListener('install', event => {
     );
 });
 
-self.addEventListener('activate', () => {
+self.addEventListener('activate', async () => {
 
     console.log('Service Worker activated');
     const cacheKeys = await caches.keys();
@@ -39,8 +39,15 @@ self.addEventListener('fetch', event => {
         return cache.match(event.request).then(response => {
             let fetchPromise = fetch(event.request).then(networkResponse => {
 
-                if(event.request.method === 'GET') {
-                    cache.put(event.request, networkResponse.clone());
+                const request = event.request;
+
+                if(request.method === 'GET' && request.url.indexOf('http') > -1) {
+                    try {
+                        cache.put(request, networkResponse.clone());
+                    } catch(e) {
+                        console.error(e);
+                    }
+                    
                 }
                  return networkResponse;
             }).catch(error => {
@@ -48,7 +55,7 @@ self.addEventListener('fetch', event => {
                 console.error(error);
             });
 
-            return response || fetchPromise;
+            return fetchPromise || response;
         });
     }))
 
