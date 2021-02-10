@@ -15,16 +15,15 @@ const filesToCache = [
 
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(function (cache) {
+        caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(filesToCache);
         })
     );
 });
 
+self.addEventListener('activate', () => {
 
-self.addEventListener('activate', () => activateSW());
-
-async function activateSW() {
+    console.log('Service Worker activated');
     const cacheKeys = await caches.keys();
 
     // Clean cache with a new activation
@@ -33,7 +32,7 @@ async function activateSW() {
             caches.delete(cacheKey);
         }
     });
-}
+});
 
 self.addEventListener('fetch', event => {
     event.respondWith(caches.open(CACHE_NAME).then(cache => {
@@ -46,7 +45,7 @@ self.addEventListener('fetch', event => {
                  return networkResponse;
             }).catch(error => {
                 console.warn('Could not fetch at the moment.');
-                console.dir(event.request);
+                console.error(error);
             });
 
             return response || fetchPromise;

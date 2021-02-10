@@ -2,9 +2,6 @@ const uuid = require('uuid').v1;
 const mongo = require('mongodb').MongoClient
 const url = process.env.MONGODB_CONNECTIONSTRING;
 
-console.log(`Connection-String: ${url}`);
-
-
 class NotebookRepository {
 
     async getNotebooks() {

@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
             scope: '/'
         })
         .then(registration => {
-            console.log("Service Worker registration completed ...");
+            console.log("Service Worker registration has been completed.");
         });
     });
 }

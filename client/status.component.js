@@ -1,32 +1,27 @@
+
+const getFooterMarkup = (text, backgroundColor, textColor) => {
+  return `<footer class="footer mt-auto py-3" style="background-color: ${backgroundColor}; color: ${textColor}; margin-top:auto; position: fixed; bottom: 0; width: 100%">
+        <div class="container">
+          <div class="row">
+            <span>${text}</span>
+          </div>        
+        </div>
+      </footer>`;
+};
+
 class StatusElement extends HTMLElement {
 
-    constructor() {
-        super();
-        window.addEventListener('offline', event => {
-            this.innerHTML = `<footer class="footer mt-auto py-3" style="background-color: #FEF3CD; color: #977B2E; margin-top:auto; position: fixed; bottom: 0; width: 100%">
-            <div class="container">
-              <div class="row">
-                <span>The app is currently offline.</span>
-              </div>        
-            </div>
-          </footer>`;
-        });
+  constructor() {
+    super();
 
-        window.addEventListener('online', event => {
-             this.innerHTML = `<footer class="footer mt-auto py-3" style="background-color: #D4ECDA; color: #588E6A; margin-top:auto; position: fixed; bottom: 0; width: 100%">
-            <div class="container">
-              <div class="row">
-                <span>The app is back online.</span>
-              </div>        
-            </div>
-          </footer>`;
+    window.addEventListener('offline', event => {
+      this.innerHTML = getFooterMarkup('The app is currently offline.', '#FEF3CD', '#977B2E')
+    });
 
-
-          let customEvent = new CustomEvent('sync-notes');
-
-          document.body.dispatchEvent(customEvent);
-        });
-    }
+    window.addEventListener('online', event => {
+      this.innerHTML = getFooterMarkup('The app is back online.', '#D4ECDA', '#588E6A');
+    });
+  }
 }
 
 window.customElements.define('status-element', StatusElement);
